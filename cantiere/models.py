@@ -6,13 +6,6 @@ from django.db import models
 from django.contrib import admin
 from datetime import datetime
 from crum import get_current_user, get_current_request
-#from django.db.models.signals import pre_delete 
-#from django.dispatch import receiver
-
-#@receiver(pre_delete)
-#def delete_repo(sender, instance, **kwargs):
-#    if sender == Set:
-#        shutil.rmtree(instance.repo)
 
 TEXTFIELD_MAXLENGHT=512
 CHARFIELD_MAXLENGHT=300
