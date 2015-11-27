@@ -1,0 +1,17 @@
+LICENSE
+MANIFEST.in
+README.rst
+setup.py
+cantiere/__init__.py
+cantiere/admin.py
+cantiere/models.py
+cantiere/tests.py
+cantiere/views.py
+cantiere/templates/home.html
+cantiere/templates/home.html~
+cantiere/templates/interventi.html
+cantiere/templates/interventi.html~
+gestione_cantiere.egg-info/PKG-INFO
+gestione_cantiere.egg-info/SOURCES.txt
+gestione_cantiere.egg-info/dependency_links.txt
+gestione_cantiere.egg-info/top_level.txt
