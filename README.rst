@@ -2,7 +2,7 @@
 Gestione-cantiere
 =================
 
-Gestione cantiere
+Gestione cantiere, un'applicazione rilasciata come software libero scritta in django per la gestione degli interventi, delle risorse e dei costi
 
 Quick start
 -----------
