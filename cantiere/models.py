@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib import admin
 from datetime import datetime
 from crum import get_current_user, get_current_request
+from django.db.models import Q
 
 TEXTFIELD_MAXLENGHT=512
 CHARFIELD_MAXLENGHT=300
@@ -54,7 +55,7 @@ class Costo(Base):
         )
     tipo = models.CharField(max_length=3,choices=SCELTA_TIPO, default='ORARIO')
     def __str__(self):
-        return self.nome
+        return self.nome + '[ ' + str(self.valore) + '/' + self.tipo + ' ]'
 
     class Meta(object):
         verbose_name = 'Tipo di costo'
@@ -71,11 +72,12 @@ class Allegato(Base):
 
     class Meta(object):
         verbose_name = 'Allegato'
-        verbose_name_plural = 'Allegati'
+        verbose_name_plural = 'File Allegati'
+
     
 class Risorsa(Base):
     nome = models.CharField(max_length=CHARFIELD_MAXLENGHT)
-    costo = models.ForeignKey(Costo, blank=True)
+    costo = models.ForeignKey(Costo, blank=True,on_delete=models.CASCADE)
     targa = models.CharField(max_length=CHARFIELD_MAXLENGHT, blank=True)
     codice_protocollo = models.CharField(max_length=CHARFIELD_MAXLENGHT, blank=True)
     TIPO_RISORSA=(
@@ -88,15 +90,25 @@ class Risorsa(Base):
     tipo = models.CharField(max_length=CHARFIELD_MAXLENGHT,choices=TIPO_RISORSA, default='persona')
 
     def __str__(self):
-        return self.nome
+        return self.nome 
 
     def save(self, *args, **kwargs):
         self.nome = self.nome and self.nome.upper()        
         super(Risorsa, self).save(*args, **kwargs)
 
+
+    @property
+    def get_costo(self,date = datetime.now()):
+        ret = self.costo
+        return ret.valore
+    
+         
     class Meta(object):
         verbose_name = 'Risorsa'
         verbose_name_plural = 'Risorse'
+
+
+        
         
 class Squadra(Base):
     nome = models.CharField(max_length=CHARFIELD_MAXLENGHT)
@@ -125,7 +137,7 @@ class Segnalazione(Base):
     descrizione_interna = models.TextField(max_length=TEXTFIELD_MAXLENGHT,blank = True)
     data_inserimento = models.DateTimeField('Data di inserimento',blank = True, null = True)
     data_chiusura = models.DateTimeField('Data di chiusura',blank = True, null = True)    
-    stato = models.ForeignKey(StatoSegnalazione, default=1,blank = True)        
+    stato = models.ForeignKey(StatoSegnalazione, default=1,blank = True,on_delete=models.CASCADE)        
     allegati = models.ManyToManyField(Allegato, blank = True)
     def __str__(self):
         return self.oggetto + '[' + str(self.stato) + ']'
@@ -158,16 +170,16 @@ class Intervento(Base):
     oggetto = models.CharField(max_length=CHARFIELD_MAXLENGHT,default='', blank = True)
     descrizione = models.TextField(max_length=TEXTFIELD_MAXLENGHT,default='', blank = True)
     descrizione_interna = models.TextField(max_length=TEXTFIELD_MAXLENGHT,default='', blank = True, null = True)        
-    segnalazione = models.ForeignKey(Segnalazione)
+    segnalazione = models.ForeignKey(Segnalazione,on_delete=models.CASCADE)
     risorse = models.ManyToManyField(Risorsa, through='InterventoRisorsa', blank = True)
-    stato = models.ForeignKey(StatoIntervento,default=1,blank = True, null = True)
+    stato = models.ForeignKey(StatoIntervento,default=1,blank = True, null = True,on_delete=models.CASCADE)
     data_inizio = models.DateTimeField('Data di inizio',blank = True, null = True)
     data_sospensione = models.DateTimeField('Data di sospensione',blank = True, null = True)
     data_riapertura = models.DateTimeField('Data di riapertura',blank = True, null = True)
     data_chiusura = models.DateTimeField('Data di chiusura',blank = True, null = True)
-    centro_costo = models.ForeignKey(CentroCosto, blank = True, null = True)
+    centro_costo = models.ForeignKey(CentroCosto, blank = True, null = True,on_delete=models.CASCADE)
     allegati = models.ManyToManyField(Allegato, blank = True)
-    responsabile = models.ForeignKey(Risorsa, related_name='intervento_responsabile', blank = True, null = True, limit_choices_to = {'tipo':'persona'})
+    responsabile = models.ForeignKey(Risorsa, related_name='intervento_responsabile', blank = True, null = True, limit_choices_to = {'tipo':'persona'},on_delete=models.CASCADE)
     buoni = models.CharField(max_length=CHARFIELD_MAXLENGHT,blank = True)
     spese = models.CharField(max_length=CHARFIELD_MAXLENGHT,blank = True)
     beneficiario = models.CharField(max_length=CHARFIELD_MAXLENGHT,default='', blank = True)
@@ -183,16 +195,31 @@ class Intervento(Base):
         verbose_name = 'Intervento'
         verbose_name_plural = 'Interventi'
 
-#    @property
-#    def costo(self):
-#        return 'tant'
+    @property
+    def costo(self):
+        "Ritorna il costo totale"
+        risorse = self.risorse.all()
+        costo_tot = 0
+        for risorsa in risorse:
+            relazioni = InterventoRisorsa.objects.filter(intervento=self, risorsa=risorsa)
+
+            for relazione in relazioni.all():
+                costo_tot += risorsa.get_costo * relazione.impiego
+
+
+
+        return costo_tot
+       
+
+
+        
+        
 
 
 class InterventoRisorsa(Base):
-    risorsa = models.ForeignKey(Risorsa)
-    intervento = models.ForeignKey(Intervento)    
-    ore = models.IntegerField(default=0)
-    minuti = models.IntegerField(default=0)
+    risorsa = models.ForeignKey(Risorsa,on_delete=models.CASCADE)
+    intervento = models.ForeignKey(Intervento,on_delete=models.CASCADE)    
+    impiego = models.IntegerField('# ore o km',default=0)
 
     class Meta(object):
         verbose_name = 'Risorsa x intervento'

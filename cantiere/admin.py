@@ -21,11 +21,12 @@ class InterventoRisorsaInline(admin.TabularInline):
 class RisorsaAdmin(admin.ModelAdmin):
     inlines = (InterventoRisorsaInline,)
     exclude = ['created','created_by','modified','modified_by','deleted']
+    list_display = ['nome','tipo','get_costo']
 
 
 class InterventoAdmin(admin.ModelAdmin):
     inlines = (InterventoRisorsaInline,)
-    list_display = ['oggetto','data_inizio','stato','stampa_intervento']
+    list_display = ['oggetto','data_inizio','stato','stampa_intervento','costo']
     list_editable = ['stato']
     ordering = ['created']
     exclude = ['created','created_by','modified','modified_by','deleted']

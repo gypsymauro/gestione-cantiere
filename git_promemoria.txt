@@ -3,7 +3,8 @@ git commit -am "Commento"
 
 git push origin master
 
-python setup.py sdist  # crea il tgz
+python setup.py sdist  
+# crea il tgz
 
 pip install --user dist/gestione-cantiere-0.1.tar.gz
 
